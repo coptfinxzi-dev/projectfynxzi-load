@@ -1,102 +1,95 @@
--- Spinning Wheel GUI Script - LEVÝ DOLNÍ ROH
--- Vytvoří se rotující kolečko s image ID, kliknutí udělá print("HELLO WORLD")
--- Rotace pomalu a plynule
--- OPRAVENO: Přidána kontrola načtení obrázku + fallback
+-- Spinning Wheel GUI – LEVÝ DOLNÍ ROH
+-- Nekonečné, plynulé točení bez Tween goalů (RunService Heartbeat)
+-- Klik → print("HELLO WORLD")
 
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Vytvoř ScreenGui
+-- ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "SpinningWheelGui"
-screenGui.Parent = PlayerGui
 screenGui.ResetOnSpawn = false
+screenGui.Parent = PlayerGui
 
--- Hlavní Frame (kruhový) - LEVÝ DOLNÍ ROH
+-- Hlavní kruhový frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "WheelFrame"
-mainFrame.Size = UDim2.new(0, 300, 0, 300)
-mainFrame.Position = UDim2.new(0, 20, 1, -320) -- LEVÝ DOLNÍ ROH (20px od okraje)
-mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-mainFrame.BackgroundTransparency = 0.2
+mainFrame.Size = UDim2.new(0, 280, 0, 280)
+mainFrame.Position = UDim2.new(0, 20, 1, -300) -- levý dolní roh
+mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+mainFrame.BackgroundTransparency = 0.3
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
--- UICorner pro kruhový tvar
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(1, 0)
 uiCorner.Parent = mainFrame
 
--- UIStroke pro okraj
 local uiStroke = Instance.new("UIStroke")
-uiStroke.Color = Color3.fromRGB(255, 255, 255)
-uiStroke.Thickness = 3
+uiStroke.Color = Color3.fromRGB(180, 180, 255)
+uiStroke.Thickness = 2.5
+uiStroke.Transparency = 0.5
 uiStroke.Parent = mainFrame
 
--- ImageLabel s tvou image
+-- Image (točící se část)
 local imageLabel = Instance.new("ImageLabel")
 imageLabel.Name = "WheelImage"
-imageLabel.Size = UDim2.new(1, 0, 1, 0)
-imageLabel.Position = UDim2.new(0, 0, 0, 0)
+imageLabel.Size = UDim2.new(1, -24, 1, -24)
+imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
 imageLabel.BackgroundTransparency = 1
-imageLabel.Image = "rbxassetid://76258847097593" -- ← SEM VLOŽ SVOJE DLUHÉ ID (např. 17654839217465938)
-imageLabel.ImageTransparency = 0
+imageLabel.Image = "rbxassetid://76258847097593"   -- ← TVÉ ID
 imageLabel.Parent = mainFrame
 
--- AnchorPoint pro správnou rotaci
-imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+-- Fallback + kontrola
+local fallbackId = "rbxassetid://6031075938"
 
--- Fallback obrázek pro test (pokud se tvůj nenačte)
-local fallbackId = "rbxassetid://6031075938" -- Defaultní Roblox loading icon (funguje vždy)
-
--- Kontrola načtení obrázku
 imageLabel.Loaded:Connect(function()
-    print("✅ Obrázek se úspěšně načetl!")
+    print("Obrázek načten")
 end)
 
 imageLabel:GetPropertyChangedSignal("ImageRectSize"):Connect(function()
-    if imageLabel.ImageRectSize.Magnitude == 0 then
-        warn("⚠️ Obrázek se nenačetl – špatné ID? Používám fallback.")
+    if imageLabel.ImageRectSize.Magnitude < 1 then
+        warn("Špatné ID → fallback")
         imageLabel.Image = fallbackId
     end
 end)
 
--- Timeout kontrola (pokud se nenačte do 5s)
-task.wait(0.1) -- Malé zpoždění
-task.delay(5, function()
-    if imageLabel.ImageRectSize.Magnitude == 0 then
-        warn("⏰ Timeout: Používám fallback obrázek.")
+task.delay(6, function()
+    if imageLabel.ImageRectSize.Magnitude < 1 then
         imageLabel.Image = fallbackId
     end
 end)
 
--- Funkce pro nekonečnou pomalou rotaci
-local function startSpinning()
-    local spinInfo = TweenInfo.new(
-        6, -- Doba jedné otáčky (6 sekund - pomalu)
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.InOut,
-        -1, -- Nekonečno repeats
-        false,
-        0
-    )
-   
-    local spinGoal = {Rotation = 360}
-    local spinTween = TweenService:Create(imageLabel, spinInfo, spinGoal)
-    spinTween:Play()
-end
+-- ───────────────────────────────────────────────
+--   NEKONEČNÉ, PLYNULÉ TOČENÍ (bez Tween cíle)
+-- ───────────────────────────────────────────────
+local rotationSpeed = 30     -- stupňů za sekundu (30 = 12 sekund na celou otáčku)
+-- Chceš pomalejší? → sniž na 20 / 15 / 10 ...
 
--- Kliknutí - MouseButton1Click
-imageLabel.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+local connection
+
+connection = RunService.Heartbeat:Connect(function(deltaTime)
+    -- deltaTime = čas od posledního snímku (v sekundách)
+    local addRotation = rotationSpeed * deltaTime
+    imageLabel.Rotation = (imageLabel.Rotation + addRotation) % 360
+end)
+
+-- Volitelně: kdyby ses chtěl později zastavit (např. při odchodu z hry)
+-- game:BindToClose(function()
+--     if connection then connection:Disconnect() end
+-- end)
+
+-- Kliknutí
+imageLabel.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 
+    or input.UserInputType == Enum.UserInputType.Touch then
         print("HELLO WORLD")
+        -- můžeš sem dát třeba imageLabel.ImageColor3 = Color3.new(1,0.3,0.3) apod.
     end
 end)
 
--- Spusť rotaci
-startSpinning()
-
-print("🚀 Spinning wheel v LEVÉM DOLNÍM ROHU! Nahraď ID a spusť.")
-print("Pokud se obrázek nenačte, skript použije fallback automaticky.")
+print("Nekonečné plynulé točení – RunService Heartbeat")
+print("Rychlost: " .. rotationSpeed .. "°/s  → jedna otáčka za " .. (360/rotationSpeed) .. " sekund")
