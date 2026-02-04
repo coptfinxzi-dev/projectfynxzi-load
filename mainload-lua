@@ -1,1 +1,23 @@
+-- vytvoření ScreenGui
+local gui = Instance.new("ScreenGui")
+gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- vytvoření ImageButton (aby šlo kliknout)
+local img = Instance.new("ImageButton")
+img.Parent = gui
+img.Size = UDim2.fromScale(0.3, 0.3)
+img.Position = UDim2.fromScale(0.5, 0.5)
+img.AnchorPoint = Vector2.new(0.5, 0.5)
+img.Image = "rbxassetid://85999348129253"
+img.BackgroundTransparency = 1
+
+-- kliknutí
+img.MouseButton1Click:Connect(function()
+	print("hello world")
+end)
+
+-- točení image
+game:GetService("RunService").RenderStepped:Connect(function(dt)
+	img.Rotation += 90 * dt -- rychlost otáčení
+end)
 
