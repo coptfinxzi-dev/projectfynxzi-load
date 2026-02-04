@@ -1,109 +1,76 @@
--- Spinning Wheel GUI - levý dolní roh
--- Pomalá plynulá rotace + klik → print + loadstring
+-- Spinning Wheel GUI Script - LEVÝ DOLNÍ ROH
+-- Vytvoří se rotující kolečko s image ID, kliknutí udělá print("HELLO WORLD")
+-- Rotace pomalu a plynule
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
+local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui", 10)
-
--- ────────────────────────────────────────
---  ScreenGui
--- ────────────────────────────────────────
+-- Vytvoř ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "SpinningWheelGui"
+screenGui.Parent = PlayerGui
 screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true          -- lepší pozicování při fullscreen / mobile
-screenGui.Parent = playerGui
 
--- ────────────────────────────────────────
---  Hlavní kruhový frame (pozadí)
--- ────────────────────────────────────────
+-- Hlavní Frame (kruhový) - LEVÝ DOLNÍ ROH
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "WheelFrame"
-mainFrame.Size = UDim2.new(0, 260, 0, 260)           -- trochu menší → vypadá elegantněji
-mainFrame.Position = UDim2.new(0, 16, 1, -276)       -- 16 px od levého a spodního okraje
-mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-mainFrame.BackgroundTransparency = 0.35
+mainFrame.Size = UDim2.new(0, 300, 0, 300)
+mainFrame.Position = UDim2.new(0, 20, 1, -320)  -- LEVÝ DOLNÍ ROH (20px od okraje)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mainFrame.BackgroundTransparency = 0.2
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
+-- UICorner pro kruhový tvar
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(1, 0)
 uiCorner.Parent = mainFrame
 
+-- UIStroke pro okraj
 local uiStroke = Instance.new("UIStroke")
-uiStroke.Color = Color3.fromRGB(180, 180, 255)
-uiStroke.Thickness = 2.5
-uiStroke.Transparency = 0.4
-uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+uiStroke.Color = Color3.fromRGB(255, 255, 255)
+uiStroke.Thickness = 3
 uiStroke.Parent = mainFrame
 
--- ────────────────────────────────────────
---  Rotující obrázek uprostřed
--- ────────────────────────────────────────
+-- ImageLabel s tvou image
 local imageLabel = Instance.new("ImageLabel")
-imageLabel.Name = "Wheel"
-imageLabel.Size = UDim2.new(0.92, 0, 0.92, 0)     -- mírně menší než frame → hezký padding
-imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+imageLabel.Name = "WheelImage"
+imageLabel.Size = UDim2.new(1, 0, 1, 0)
+imageLabel.Position = UDim2.new(0, 0, 0, 0)
 imageLabel.BackgroundTransparency = 1
-imageLabel.Image = "rbxassetid://85999348129253"   -- ← sem tvůj asset id
+imageLabel.Image = "rbxassetid://85999348129253"  -- Tvůj ID
 imageLabel.ImageTransparency = 0
-imageLabel.ResampleMode = Enum.ResamplerMode.Pixelated   -- ostré pixely (pokud je to pixel art)
 imageLabel.Parent = mainFrame
 
--- ────────────────────────────────────────
---  Pomalá nekonečná rotace
--- ────────────────────────────────────────
+-- AnchorPoint pro správnou rotaci
+imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+-- Funkce pro nekonečnou pomalou rotaci
 local function startSpinning()
-    local tweenInfo = TweenInfo.new(
-        8,                      -- 8 sekund na jednu otáčku → příjemně pomalé
+    local spinInfo = TweenInfo.new(
+        6,  -- Doba jedné otáčky (6 sekund - pomalu)
         Enum.EasingStyle.Linear,
-        Enum.EasingDirection.In,
-        -1,                     -- nekonečno
+        Enum.EasingDirection.InOut,
+        -1,  -- Nekonečno repeats
         false,
         0
     )
-
-    local tween = TweenService:Create(
-        imageLabel,
-        tweenInfo,
-        { Rotation = 360 }
-    )
-
-    tween:Play()
+    
+    local spinGoal = {Rotation = 360}
+    local spinTween = TweenService:Create(imageLabel, spinInfo, spinGoal)
+    spinTween:Play()
 end
 
--- ────────────────────────────────────────
---  Kliknutí (myš i touch)
--- ────────────────────────────────────────
-local function onActivated()
-    -- print("HELLO WORLD")             -- původní test
-    print("Wheel clicked!")
-
-    -- ← sem tvůj původní loadstring (nebo cokoli jiného)
-    -- loadstring(game:HttpGet("https://pastefy.app/Q2YqTe4z/raw", true))()
-end
-
-imageLabel.MouseButton1Click:Connect(onActivated)
-imageLabel.TouchTap:Connect(onActivated)   -- lepší podpora mobilu
-
--- Alternativa přes InputBegan (pokud chceš více kontrolu):
---[[
-imageLabel.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton1 
-    or input.UserInputType == Enum.UserInputType.Touch then
-        onActivated()
+-- Kliknutí - MouseButton1Click
+imageLabel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        print("HELLO WORLD")
     end
 end)
---]]
 
--- ────────────────────────────────────────
---  Spuštění
--- ────────────────────────────────────────
+-- Spusť rotaci
 startSpinning()
 
-print("Spinning wheel v levém dolním rohu aktivován ✓  Klikni na kolečko!")
+print("Spinning wheel v LEVÉM DOLNÍM ROHU! Klikni pro HELLO WORLD")
