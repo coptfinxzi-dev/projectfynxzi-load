@@ -1,6 +1,7 @@
 -- Spinning Wheel GUI Script - LEVÝ DOLNÍ ROH
 -- Vytvoří se rotující kolečko s image ID, kliknutí udělá print("HELLO WORLD")
 -- Rotace pomalu a plynule
+-- OPRAVENO: Přidána kontrola načtení obrázku + fallback
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -16,7 +17,7 @@ screenGui.ResetOnSpawn = false
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "WheelFrame"
 mainFrame.Size = UDim2.new(0, 300, 0, 300)
-mainFrame.Position = UDim2.new(0, 20, 1, -320)  -- LEVÝ DOLNÍ ROH (20px od okraje)
+mainFrame.Position = UDim2.new(0, 20, 1, -320) -- LEVÝ DOLNÍ ROH (20px od okraje)
 mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 mainFrame.BackgroundTransparency = 0.2
 mainFrame.BorderSizePixel = 0
@@ -39,7 +40,7 @@ imageLabel.Name = "WheelImage"
 imageLabel.Size = UDim2.new(1, 0, 1, 0)
 imageLabel.Position = UDim2.new(0, 0, 0, 0)
 imageLabel.BackgroundTransparency = 1
-imageLabel.Image = "rbxassetid://76258847097593"  -- Tvůj ID
+imageLabel.Image = "rbxassetid://76258847097593" -- ← SEM VLOŽ SVOJE DLUHÉ ID (např. 17654839217465938)
 imageLabel.ImageTransparency = 0
 imageLabel.Parent = mainFrame
 
@@ -47,17 +48,41 @@ imageLabel.Parent = mainFrame
 imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
 imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
 
+-- Fallback obrázek pro test (pokud se tvůj nenačte)
+local fallbackId = "rbxassetid://6031075938" -- Defaultní Roblox loading icon (funguje vždy)
+
+-- Kontrola načtení obrázku
+imageLabel.Loaded:Connect(function()
+    print("✅ Obrázek se úspěšně načetl!")
+end)
+
+imageLabel:GetPropertyChangedSignal("ImageRectSize"):Connect(function()
+    if imageLabel.ImageRectSize.Magnitude == 0 then
+        warn("⚠️ Obrázek se nenačetl – špatné ID? Používám fallback.")
+        imageLabel.Image = fallbackId
+    end
+end)
+
+-- Timeout kontrola (pokud se nenačte do 5s)
+task.wait(0.1) -- Malé zpoždění
+task.delay(5, function()
+    if imageLabel.ImageRectSize.Magnitude == 0 then
+        warn("⏰ Timeout: Používám fallback obrázek.")
+        imageLabel.Image = fallbackId
+    end
+end)
+
 -- Funkce pro nekonečnou pomalou rotaci
 local function startSpinning()
     local spinInfo = TweenInfo.new(
-        6,  -- Doba jedné otáčky (6 sekund - pomalu)
+        6, -- Doba jedné otáčky (6 sekund - pomalu)
         Enum.EasingStyle.Linear,
         Enum.EasingDirection.InOut,
-        -1,  -- Nekonečno repeats
+        -1, -- Nekonečno repeats
         false,
         0
     )
-    
+   
     local spinGoal = {Rotation = 360}
     local spinTween = TweenService:Create(imageLabel, spinInfo, spinGoal)
     spinTween:Play()
@@ -73,4 +98,5 @@ end)
 -- Spusť rotaci
 startSpinning()
 
-print("Spinning wheel v LEVÉM DOLNÍM ROHU! Klikni pro HELLO WORLD")
+print("🚀 Spinning wheel v LEVÉM DOLNÍM ROHU! Nahraď ID a spusť.")
+print("Pokud se obrázek nenačte, skript použije fallback automaticky.")
