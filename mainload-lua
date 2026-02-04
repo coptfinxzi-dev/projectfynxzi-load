@@ -1,23 +1,76 @@
--- vytvoření ScreenGui
-local gui = Instance.new("ScreenGui")
-gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+-- Spinning Wheel GUI Script - LEVÝ DOLNÍ ROH
+-- Vytvoří se rotující kolečko s image ID, kliknutí udělá print("HELLO WORLD")
+-- Rotace pomalu a plynule
 
--- vytvoření ImageButton (aby šlo kliknout)
-local img = Instance.new("ImageButton")
-img.Parent = gui
-img.Size = UDim2.fromScale(0.3, 0.3)
-img.Position = UDim2.fromScale(0.5, 0.5)
-img.AnchorPoint = Vector2.new(0.5, 0.5)
-img.Image = "rbxassetid://85999348129253"
-img.BackgroundTransparency = 1
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- kliknutí
-img.MouseButton1Click:Connect(function()
-	print("hello world")
+-- Vytvoř ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SpinningWheelGui"
+screenGui.Parent = PlayerGui
+screenGui.ResetOnSpawn = false
+
+-- Hlavní Frame (kruhový) - LEVÝ DOLNÍ ROH
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "WheelFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 300)
+mainFrame.Position = UDim2.new(0, 20, 1, -320)  -- LEVÝ DOLNÍ ROH (20px od okraje)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+-- UICorner pro kruhový tvar
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(1, 0)
+uiCorner.Parent = mainFrame
+
+-- UIStroke pro okraj
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(255, 255, 255)
+uiStroke.Thickness = 3
+uiStroke.Parent = mainFrame
+
+-- ImageLabel s tvou image
+local imageLabel = Instance.new("ImageLabel")
+imageLabel.Name = "WheelImage"
+imageLabel.Size = UDim2.new(1, 0, 1, 0)
+imageLabel.Position = UDim2.new(0, 0, 0, 0)
+imageLabel.BackgroundTransparency = 1
+imageLabel.Image = "rbxassetid://76258847097593"  -- Tvůj ID
+imageLabel.ImageTransparency = 0
+imageLabel.Parent = mainFrame
+
+-- AnchorPoint pro správnou rotaci
+imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+-- Funkce pro nekonečnou pomalou rotaci
+local function startSpinning()
+    local spinInfo = TweenInfo.new(
+        6,  -- Doba jedné otáčky (6 sekund - pomalu)
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.InOut,
+        -1,  -- Nekonečno repeats
+        false,
+        0
+    )
+    
+    local spinGoal = {Rotation = 360}
+    local spinTween = TweenService:Create(imageLabel, spinInfo, spinGoal)
+    spinTween:Play()
+end
+
+-- Kliknutí - MouseButton1Click
+imageLabel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        print("HELLO WORLD")
+    end
 end)
 
--- točení image
-game:GetService("RunService").RenderStepped:Connect(function(dt)
-	img.Rotation += 90 * dt -- rychlost otáčení
-end)
+-- Spusť rotaci
+startSpinning()
 
+print("Spinning wheel v LEVÉM DOLNÍM ROHU! Klikni pro HELLO WORLD")
